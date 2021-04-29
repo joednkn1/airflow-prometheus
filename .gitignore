@@ -1,5 +1,8 @@
 **/__pycache__
 */__pycache__
 
+dist/
+publish.log
+
 .idea/
 airflow/
