@@ -1,0 +1,84 @@
+[tool.poetry]
+name = "airflow_prometheus"
+version = "0.1.0"
+description = "Modern Prometheus exporter for Airflow (based on robinhood/airflow-prometheus-exporter)"
+authors = ["Piotr Styczyński <piotrsty1@gmail.com>"]
+readme = "README.md"
+include = [
+    "README.md",
+]
+
+[tool.poetry.scripts]
+publish = 'publish:publish'
+
+
+[tool.poetry.dependencies]
+python = "^3.8"
+apache-airflow = ">=2.0.0"
+typer = "^0.3.2"
+Flask-Admin = "^1.5.8"
+prometheus-client = "^0.10.1"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.2.1"
+pytest-xdist = "^2.2.0"
+isort = "^5.7.0"
+black = "^20.8b1"
+pydoc-markdown = "^3.9.0"
+s3pypi = "^0.11.0"
+flakehell = "0.9.0"
+flake8 = "3.8.3"
+poetry-publish = "^0.4.1"
+bump2version = "^1.0.1"
+gitchangelog = "^3.0.4"
+
+[tool.poetry.plugins]
+
+[tool.poetry.plugins."airflow.plugins"]
+"airflow_prometheus_plugin" = "airflow_prometheus:AirflowPrometheusPlugin"
+
+[tool.black]
+line-length = 79
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
+[tool.flakehell]
+exclude = ["README.rst", "README.md"]
+format = "colored"
+max_line_length = 120
+show_source = true
+whitelist = "../../allowlist.txt"
+
+[tool.flakehell.plugins]
+flake8-bandit = ["+*", "-S322"]
+flake8-bugbear = ["+*"]
+flake8-builtins = ["+*"]
+flake8-comprehensions = ["+*"]
+flake8-darglint = ["+*"]
+flake8-docstrings = ["+*"]
+flake8-eradicate = ["+*"]
+flake8-isort = ["+*"]
+flake8-mutable = ["+*"]
+flake8-pytest-style = ["+*"]
+flake8-spellcheck = ["+*"]
+mccabe = ["+*"]
+pep8-naming = ["+*"]
+pycodestyle = ["+*", "-E203", "-W503"]
+pyflakes = ["+*", "-E203"]
+pylint = ["+*", "-E203"]
+
+[build-system]
+requires = ["poetry-core>=1.1.2a3"]
+build-backend = "poetry.core.masonry.api"
