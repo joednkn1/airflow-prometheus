@@ -11,23 +11,8 @@ from sqlalchemy import and_, func
 from dataclasses import dataclass
 from datetime import datetime
 
-from enum import Enum, unique
-from .utils import session_scope
+from .utils import session_scope, ProcessingState, to_processing_state
 from typing import Generator
-
-
-@unique
-class TaskState(str, Enum):
-    SKIPPED = "skipped"
-    SUCCESS = "success"
-    NO_STATUS = "no_status"
-    QUEUED = "queued"
-    RUNNING = "running"
-    UP_FOR_RETRY = "up_for_retry"
-    UP_FOR_RESCHEDULE = "up_for_reschedule"
-    UPSTREAM_FAILED = "upstream_failed"
-    SCHEDULED = "scheduled"
-    FAILED = "failed"
 
 
 @dataclass
@@ -36,7 +21,7 @@ class TaskStateInfo:
     dag_id: str
     operator_name: str
     owner: str
-    state: TaskState
+    state: ProcessingState
     count: float
 
 
@@ -87,15 +72,12 @@ def get_task_state_info() -> Generator[TaskStateInfo, None, None]:
             )
             .all()
         ):
-            task_state_name = task.state or TaskState.NO_STATUS
-            assert task_state_name in TaskState.__members__.values()
-
             yield TaskStateInfo(
                 task_id=task.task_id,
                 dag_id=task.dag_id,
                 operator_name=task.operator,
                 owner=task.owners,
-                state=[getattr(TaskState, key) for (key, value) in TaskState.__members__.items() if value == task_state_name][0],
+                state=to_processing_state(task.state),
                 count=task.value,
             )
 

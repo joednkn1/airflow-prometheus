@@ -10,10 +10,13 @@ from prometheus_client import generate_latest, REGISTRY
 from airflow_prometheus.metrics import TasksMetricsCollector, DagsMetricsCollector,\
     SchedulerMetricsCollector, DagBagMetricsCollector
 
+from .statsd_hook.hook import PrometheusStatsClient
+
 REGISTRY.register(TasksMetricsCollector())
 REGISTRY.register(DagsMetricsCollector())
 REGISTRY.register(SchedulerMetricsCollector())
 REGISTRY.register(DagBagMetricsCollector())
+REGISTRY.register(PrometheusStatsClient)
 
 
 class Metrics(AppBuilderBaseView):
@@ -51,3 +54,4 @@ class AirflowPrometheusPlugin(AirflowPlugin):
         {"category": "Admin", "name": "Prometheus metrics", "view": Metrics()}
     ]
     appbuilder_menu_items = []
+

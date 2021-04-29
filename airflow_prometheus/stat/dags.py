@@ -3,11 +3,29 @@ from airflow.models import DagModel, DagRun, TaskInstance
 from airflow.settings import Session
 from airflow.utils.state import State
 from sqlalchemy import and_, func
+from dataclasses import dataclass
 
-from .utils import session_scope
+from typing import Generator
+from .utils import session_scope, ProcessingState, to_processing_state
+from datetime import datetime
 
 
-def get_dag_state_info():
+@dataclass
+class DagStateInfo:
+    dag_id: str
+    owner: str
+    state: ProcessingState
+    count: float
+
+
+@dataclass
+class DagDurationInfo:
+    dag_id: str
+    start_date: datetime
+    end_date: datetime
+
+
+def get_dag_state_info() -> Generator[DagStateInfo, None, None]:
     """Number of DAG Runs with particular state."""
     with session_scope(Session) as session:
         dag_status_query = (
@@ -19,7 +37,7 @@ def get_dag_state_info():
             .group_by(DagRun.dag_id, DagRun.state)
             .subquery()
         )
-        return (
+        for dag in (
             session.query(
                 dag_status_query.c.dag_id,
                 dag_status_query.c.state,
@@ -32,10 +50,16 @@ def get_dag_state_info():
                 DagModel.is_paused == False,
             )
             .all()
-        )
+        ):
+            yield DagStateInfo(
+                dag_id=dag.dag_id,
+                owner=dag.owners,
+                count=dag.count,
+                state=to_processing_state(dag.state),
+            )
 
 
-def get_dag_duration_info():
+def get_dag_duration_info() -> Generator[DagDurationInfo, None, None]:
     """Duration of successful DAG Runs."""
     with session_scope(Session) as session:
         max_execution_dt_query = (
@@ -79,7 +103,7 @@ def get_dag_duration_info():
             .subquery()
         )
 
-        return (
+        for dag in (
             session.query(
                 dag_start_dt_query.c.dag_id,
                 dag_start_dt_query.c.start_date,
@@ -98,5 +122,11 @@ def get_dag_duration_info():
                 TaskInstance.end_date.isnot(None),
             )
             .all()
-        )
+        ):
+            yield DagDurationInfo(
+                dag_id=dag.dag_id,
+                start_date=dag.start_date,
+                end_date=dag.end_date,
+            )
+
 

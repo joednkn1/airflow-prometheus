@@ -18,6 +18,8 @@ apache-airflow = ">=2.0.0"
 typer = "^0.3.2"
 Flask-Admin = "^1.5.8"
 prometheus-client = "^0.10.1"
+statsd = "^3.3.0"
+simplekv = "^0.14.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"
@@ -35,7 +37,7 @@ gitchangelog = "^3.0.4"
 [tool.poetry.plugins]
 
 [tool.poetry.plugins."airflow.plugins"]
-"airflow_prometheus_plugin" = "airflow_prometheus:AirflowPrometheusPlugin"
+"airflow_prometheus_plugin" = "airflow_prometheus.prometheus_exporter:AirflowPrometheusPlugin"
 
 [tool.black]
 line-length = 79
