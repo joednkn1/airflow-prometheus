@@ -96,7 +96,7 @@ def get_latest_tasks_state_info(dag_id: str) -> Dict[str, LatestTaskInfo]:
                 dag_id=latest_task_run.dag_id,
                 execution_date=latest_task_run.execution_date,
                 state=to_processing_state(latest_task_run.state),
-                duration=latest_task_run.duration,
+                duration=latest_task_run.duration or 0,
             )
         return latest_task_runs_dict
 
@@ -148,9 +148,9 @@ def get_task_state_info() -> Generator[TaskStateInfo, None, None]:
                 owner=task.owners,
                 state=to_processing_state(task.state),
                 count=task.value,
-                avg_duration=task.avg_duration,
-                min_duration=task.min_duration,
-                max_duration=task.max_duration,
+                avg_duration=task.avg_duration or 0,
+                min_duration=task.min_duration or 0,
+                max_duration=task.max_duration or 0,
                 max_tries=task.max_tries,
             )
 
