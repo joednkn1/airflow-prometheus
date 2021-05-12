@@ -3,8 +3,6 @@ from contextlib import contextmanager
 from enum import Enum, unique
 from typing import Optional
 
-CANARY_DAG = "canary_dag"
-
 
 @unique
 class ProcessingState(str, Enum):

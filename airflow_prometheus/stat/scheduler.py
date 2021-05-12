@@ -4,7 +4,7 @@ from airflow.settings import Session
 from airflow.utils.state import State
 from sqlalchemy import and_, func
 
-from .utils import session_scope, CANARY_DAG
+from .utils import session_scope
 
 
 def get_dag_scheduler_delay():
@@ -14,7 +14,7 @@ def get_dag_scheduler_delay():
             session.query(
                 DagRun.dag_id, DagRun.execution_date, DagRun.start_date,
             )
-            .filter(DagRun.dag_id == CANARY_DAG,)
+            .filter(DagRun._state == State.SUCCESS,)
             .order_by(DagRun.execution_date.desc())
             .limit(1)
             .all()
@@ -30,7 +30,7 @@ def get_task_scheduler_delay():
                 func.max(TaskInstance.start_date).label("max_start"),
             )
             .filter(
-                TaskInstance.dag_id == CANARY_DAG,
+                TaskInstance.state == State.SUCCESS,
                 TaskInstance.queued_dttm.isnot(None),
             )
             .group_by(TaskInstance.queue)
@@ -51,8 +51,7 @@ def get_task_scheduler_delay():
                 ),
             )
             .filter(
-                TaskInstance.dag_id
-                == CANARY_DAG,  # Redundant, for performance.
+                TaskInstance.state == State.SUCCESS,  # Redundant, for performance.
             )
             .all()
         )
