@@ -117,7 +117,7 @@ def get_task_state_info() -> Generator[TaskStateInfo, None, None]:
                 func.max(TaskInstance.max_tries).label("max_tries"),
             )
             .group_by(
-                TaskInstance.dag_id, TaskInstance.task_id, TaskInstance.state
+                TaskInstance.dag_id, TaskInstance.task_id, TaskInstance.state, TaskInstance.operator,
             )
             .subquery()
         )
