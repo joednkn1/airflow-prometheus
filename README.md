@@ -1,1 +1,1 @@
-# Airflow Prometheus (0.1.0)
+# Airflow Prometheus (0.2.0)
