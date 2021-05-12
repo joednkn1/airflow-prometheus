@@ -6,13 +6,14 @@ from airflow.configuration import conf
 from airflow.models import DagModel, DagRun, TaskInstance, TaskFail, XCom
 from airflow.settings import Session
 from airflow.utils.state import State
+from airflow.models.dagbag import DagBag
 from airflow.utils.log.logging_mixin import LoggingMixin
 from sqlalchemy import and_, func
 from dataclasses import dataclass
 from datetime import datetime
 
 from .utils import session_scope, ProcessingState, to_processing_state
-from typing import Generator
+from typing import Generator, Dict, List
 
 
 @dataclass
@@ -23,6 +24,10 @@ class TaskStateInfo:
     owner: str
     state: ProcessingState
     count: float
+    avg_duration: float
+    min_duration: float
+    max_duration: float
+    max_tries: int
 
 
 @dataclass
@@ -40,6 +45,62 @@ class TaskDurationInfo:
     end_date: datetime
     execution_date: datetime
 
+
+@dataclass
+class LatestTaskInfo:
+    task_id: str
+    dag_id: str
+    execution_date: datetime
+    state: ProcessingState
+    duration: float
+
+
+def get_latest_tasks_state_info_for_all_dags() -> List[LatestTaskInfo]:
+    results: List[LatestTaskInfo] = []
+    for dag in DagBag().dags.values():
+        meta = get_latest_tasks_state_info(dag.dag_id)
+        results += list(meta.values())
+    return results
+
+
+def get_latest_tasks_state_info(dag_id: str) -> Dict[str, LatestTaskInfo]:
+    with session_scope(Session) as session:
+        latest_dag_execution_date = (
+            session.query(
+                DagRun.execution_date,
+                DagRun.dag_id,
+            )
+            .filter(DagRun.dag_id == dag_id)
+            .order_by(DagRun.execution_date.desc())
+            .limit(1)
+            .all()
+        )
+        if len(latest_dag_execution_date) == 0:
+            return dict()
+        latest_dag_execution_date = latest_dag_execution_date[0].execution_date
+        latest_task_runs = (
+            session.query(
+                TaskInstance.state,
+                TaskInstance.dag_id,
+                TaskInstance.task_id,
+                TaskInstance.execution_date,
+                TaskInstance.duration,
+            )
+            .filter(TaskInstance.execution_date == latest_dag_execution_date)
+            .all()
+        )
+        latest_task_runs_dict = dict()
+        for latest_task_run in latest_task_runs:
+            latest_task_runs_dict[latest_task_run.task_id] = LatestTaskInfo(
+                task_id=latest_task_run.task_id,
+                dag_id=latest_task_run.dag_id,
+                execution_date=latest_task_run.execution_date,
+                state=to_processing_state(latest_task_run.state),
+                duration=latest_task_run.duration,
+            )
+        return latest_task_runs_dict
+
+
 def get_task_state_info() -> Generator[TaskStateInfo, None, None]:
     """Number of task instances with particular state."""
     with session_scope(Session) as session:
@@ -50,6 +111,10 @@ def get_task_state_info() -> Generator[TaskStateInfo, None, None]:
                 TaskInstance.operator,
                 TaskInstance.state,
                 func.count(TaskInstance.dag_id).label("value"),
+                func.avg(TaskInstance.duration).label("avg_duration"),
+                func.min(TaskInstance.duration).label("min_duration"),
+                func.max(TaskInstance.duration).label("max_duration"),
+                func.max(TaskInstance.max_tries).label("max_tries"),
             )
             .group_by(
                 TaskInstance.dag_id, TaskInstance.task_id, TaskInstance.state
@@ -63,6 +128,10 @@ def get_task_state_info() -> Generator[TaskStateInfo, None, None]:
                 task_status_query.c.operator,
                 task_status_query.c.state,
                 task_status_query.c.value,
+                task_status_query.c.avg_duration,
+                task_status_query.c.min_duration,
+                task_status_query.c.max_duration,
+                task_status_query.c.max_tries,
                 DagModel.owners,
             )
             .join(DagModel, DagModel.dag_id == task_status_query.c.dag_id)
@@ -79,6 +148,10 @@ def get_task_state_info() -> Generator[TaskStateInfo, None, None]:
                 owner=task.owners,
                 state=to_processing_state(task.state),
                 count=task.value,
+                avg_duration=task.avg_duration,
+                min_duration=task.min_duration,
+                max_duration=task.max_duration,
+                max_tries=task.max_tries,
             )
 
 

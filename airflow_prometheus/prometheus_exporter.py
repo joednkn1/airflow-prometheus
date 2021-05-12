@@ -4,19 +4,23 @@ from airflow.plugins_manager import AirflowPlugin
 from flask import Blueprint
 from flask_admin import expose
 from flask_appbuilder import BaseView as AppBuilderBaseView
+from airflow_prometheus.grafana_data.service import pandas_component
+
+from airflow.settings import conf
 
 from flask import Response
 from prometheus_client import generate_latest, REGISTRY
 from airflow_prometheus.metrics import TasksMetricsCollector, DagsMetricsCollector,\
     SchedulerMetricsCollector, DagBagMetricsCollector
-
-from .statsd_hook.hook import PrometheusStatsClient
+from airflow_prometheus.grafana_data.data import init_json_exporters
 
 REGISTRY.register(TasksMetricsCollector())
 REGISTRY.register(DagsMetricsCollector())
 REGISTRY.register(SchedulerMetricsCollector())
 REGISTRY.register(DagBagMetricsCollector())
-REGISTRY.register(PrometheusStatsClient)
+#REGISTRY.register(PrometheusStatsClient)
+
+init_json_exporters()
 
 
 class Metrics(AppBuilderBaseView):
@@ -47,7 +51,8 @@ class AirflowPrometheusPlugin(AirflowPlugin):
             template_folder="templates",
             static_folder="static",
             static_url_path="/static/prometheus",
-        )
+        ),
+        pandas_component,
     ]
     menu_links = []
     appbuilder_views = [

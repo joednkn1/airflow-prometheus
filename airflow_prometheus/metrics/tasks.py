@@ -1,7 +1,8 @@
 """Prometheus exporter for Airflow."""
 from prometheus_client.core import GaugeMetricFamily
 from airflow_prometheus.stat import get_task_state_info, extract_xcom_parameter, get_xcom_params,\
-    get_num_queued_tasks, get_task_duration_info, get_task_failure_counts, get_task_scheduler_delay
+    get_num_queued_tasks, get_task_duration_info, get_task_failure_counts, \
+    get_task_scheduler_delay, get_latest_tasks_state_info_for_all_dags
 from airflow_prometheus.xcom_config import load_xcom_config
 
 
@@ -28,8 +29,52 @@ class TasksMetricsCollector(object):
             )
         yield t_state
 
-        task_duration = GaugeMetricFamily(
+        task_detailed_durations = GaugeMetricFamily(
             "airflow_task_duration",
+            "Durations of tasks in seconds by operator",
+            labels=["aggregation", "operator_name", "task_id", "dag_id"],
+        )
+        for task in task_info:
+            task_detailed_durations.add_metric(
+                ["avg", task.operator_name, task.task_id, task.dag_id],
+                task.avg_duration,
+            )
+            task_detailed_durations.add_metric(
+                ["min", task.operator_name, task.task_id, task.dag_id],
+                task.min_duration,
+            )
+            task_detailed_durations.add_metric(
+                ["max", task.operator_name, task.task_id, task.dag_id],
+                task.max_duration,
+            )
+        yield task_detailed_durations
+
+        task_max_tries = GaugeMetricFamily(
+            "airflow_task_max_tries",
+            "Max tries for tasks",
+            labels=["operator_name", "task_id", "dag_id"],
+        )
+        for task in task_info:
+            task_detailed_durations.add_metric(
+                [task.operator_name, task.task_id, task.dag_id],
+                task.max_tries,
+            )
+        yield task_max_tries
+
+        last_dag_run = GaugeMetricFamily(
+            "airflow_last_dag_run",
+            "Tasks status for latest dag run",
+            labels=["status", "task_id", "dag_id"],
+        )
+        for task in get_latest_tasks_state_info_for_all_dags():
+            last_dag_run.add_metric(
+                [task.state, task.task_id, task.dag_id],
+                task.duration,
+            )
+        yield last_dag_run
+
+        successful_task_duration = GaugeMetricFamily(
+            "airflow_successful_task_duration",
             "Duration of successful tasks in seconds",
             labels=["task_id", "dag_id", "execution_date"],
         )
@@ -37,11 +82,11 @@ class TasksMetricsCollector(object):
             task_duration_value = (
                 task.end_date - task.start_date
             ).total_seconds()
-            task_duration.add_metric(
+            successful_task_duration.add_metric(
                 [task.task_id, task.dag_id, str(task.execution_date.date())],
                 task_duration_value,
             )
-        yield task_duration
+        yield successful_task_duration
 
         task_failure_count = GaugeMetricFamily(
             "airflow_task_fail_count",
