@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "airflow_prometheus"
-version = "0.3.0"
+version = "0.4.0"
 description = "Modern Prometheus exporter for Airflow (based on robinhood/airflow-prometheus-exporter)"
 authors = ["Piotr Styczyński <piotrsty1@gmail.com>"]
 readme = "README.md"
