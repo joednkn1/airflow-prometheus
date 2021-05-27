@@ -63,21 +63,21 @@ Install the plugin with the following command or via grafana.com:
 
 Now let's create a json datasource and point it to `/metrics/json/` (trailing slash is important and you may need to check skip TLS verify in order for it to work):
 
-<img src="https://github.com/covid-genomics/airflow-prometheus/blob/master/static/screen1.png?raw=true" width="400px"/>
+<img src="https://github.com/covid-genomics/airflow-prometheus/blob/master/static/screen1.png?raw=true" width="700px"/>
 
 Now add ad-hoc variable:
 
-<img src="https://github.com/covid-genomics/airflow-prometheus/blob/master/static/screen2.png?raw=true" width="400px"/>
+<img src="https://github.com/covid-genomics/airflow-prometheus/blob/master/static/screen2.png?raw=true" width="700px"/>
 
 Now you can see ad-hoc filter at the top of the dashboard. You can select DAGs with that filter.
 Now we need to add some visualizations.
 
-<img src="https://github.com/covid-genomics/airflow-prometheus/blob/master/static/screen3.png?raw=true" width="400px"/>
+<img src="https://github.com/covid-genomics/airflow-prometheus/blob/master/static/screen3.png?raw=true" width="700px"/>
 
 We add new panel and select newly created json datasource. As metric we select `dags` and for visualization type: `NodeGraph`
 
 
-<img src="https://github.com/covid-genomics/airflow-prometheus/blob/master/static/screen4.png?raw=true" width="400px"/>
+<img src="https://github.com/covid-genomics/airflow-prometheus/blob/master/static/screen4.png?raw=true" width="700px"/>
 
 Node graph will show the dependencies between tasks and their status for the latests instance of the DAG.
 DAGs can be selected with the ad-hoc variable you created.
