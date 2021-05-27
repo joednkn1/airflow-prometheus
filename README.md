@@ -83,4 +83,8 @@ Node graph will show the dependencies between tasks and their status for the lat
 DAGs can be selected with the ad-hoc variable you created.
 You can remove that ad-hoc filter to show all DAGs, but it's not recommended as NodeGraph panel is fairly bad at zooming or paning the diagram.
 
-  
+## Example dashboard
+
+The example dashboard is available here: [example/dashboard.json](https://raw.githubusercontent.com/covid-genomics/airflow-prometheus/master/example/dashboard.json?token=ABX26OE233IFRWRSRRWMKM3AV7UIC)
+
+<img src="https://github.com/covid-genomics/airflow-prometheus/blob/master/static/screen5.png?raw=true" width="700px"/>
