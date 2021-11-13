@@ -18,7 +18,6 @@ apache-airflow = ">=2.0.0"
 typer = "^0.3.2"
 Flask-Admin = "^1.5.8"
 prometheus-client = "^0.10.1"
-statsd = "^3.3.0"
 simplekv = "^0.14.1"
 
 [tool.poetry.dev-dependencies]
