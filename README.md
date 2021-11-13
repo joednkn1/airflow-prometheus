@@ -1,4 +1,4 @@
-# Airflow Prometheus (0.4.0)
+# Airflow Prometheus (0.4.1)
 
 [![PyPI](https://img.shields.io/pypi/v/airflow-prometheus?style=flat-square)](https://pypi.org/project/airflow-prometheus/)
 [![GitHub commit activity](https://img.shields.io/github/commit-activity/m/covid-genomics/airflow-dvc?style=flat-square)](https://github.com/covid-genomics/airflow-prometheus/commits/master)
@@ -18,13 +18,13 @@ We extended the project, improved the code and added new features to enable bett
 
 To install this package please do:
 ```bash
-  $ python3 -m pip install "airflow-prometheus==0.4.0"
+  $ python3 -m pip install "airflow-prometheus==0.4.1"
 ```
 
 Or if you are using [Poetry](https://python-poetry.org/) to run Apache Airflow:
 ```bash
   $ poetry add apache-airflow@latest
-  $ poetry add "airflow-prometheus@0.4.0"
+  $ poetry add "airflow-prometheus@0.4.1"
 ```
 
 ## What this package provides?
