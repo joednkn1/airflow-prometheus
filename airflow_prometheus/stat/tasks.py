@@ -9,12 +9,19 @@ from airflow.utils.state import State
 from airflow.models.dagbag import DagBag
 from airflow.utils.log.logging_mixin import LoggingMixin
 from sqlalchemy import and_, func
+from sqlalchemy.exc import InvalidRequestError
 from dataclasses import dataclass
 from datetime import datetime
 
 from .utils import session_scope, ProcessingState, to_processing_state
 from typing import Generator, Dict, List
 
+def check_if_can_query_tasks():
+    try:
+        with session_scope(Session) as session:
+            return len(session.query(TaskInstance.task_id).all()) > 0
+    except:
+        return False
 
 @dataclass
 class TaskStateInfo:
@@ -56,6 +63,8 @@ class LatestTaskInfo:
 
 
 def get_latest_tasks_state_info_for_all_dags() -> List[LatestTaskInfo]:
+    if not check_if_can_query_tasks():
+        return []
     results: List[LatestTaskInfo] = []
     for dag in DagBag().dags.values():
         meta = get_latest_tasks_state_info(dag.dag_id)
@@ -64,6 +73,8 @@ def get_latest_tasks_state_info_for_all_dags() -> List[LatestTaskInfo]:
 
 
 def get_latest_tasks_state_info(dag_id: str) -> Dict[str, LatestTaskInfo]:
+    if not check_if_can_query_tasks():
+        return dict()
     with session_scope(Session) as session:
         latest_dag_execution_date = (
             session.query(
@@ -77,16 +88,18 @@ def get_latest_tasks_state_info(dag_id: str) -> Dict[str, LatestTaskInfo]:
         )
         if len(latest_dag_execution_date) == 0:
             return dict()
+
         latest_dag_execution_date = latest_dag_execution_date[0].execution_date
         latest_task_runs = (
             session.query(
                 TaskInstance.state,
                 TaskInstance.dag_id,
                 TaskInstance.task_id,
-                TaskInstance.execution_date,
                 TaskInstance.duration,
+                DagRun.execution_date
             )
-            .filter(TaskInstance.execution_date == latest_dag_execution_date)
+            .join(DagRun, DagRun.dag_id == TaskInstance.dag_id)
+            .filter(DagRun.execution_date == latest_dag_execution_date)
             .all()
         )
         latest_task_runs_dict = dict()
@@ -103,6 +116,8 @@ def get_latest_tasks_state_info(dag_id: str) -> Dict[str, LatestTaskInfo]:
 
 def get_task_state_info() -> Generator[TaskStateInfo, None, None]:
     """Number of task instances with particular state."""
+    if not check_if_can_query_tasks():
+        return
     with session_scope(Session) as session:
         task_status_query = (
             session.query(
@@ -157,6 +172,8 @@ def get_task_state_info() -> Generator[TaskStateInfo, None, None]:
 
 def get_task_failure_counts() -> Generator[TaskFailInfo, None, None]:
     """Compute Task Failure Counts."""
+    if not check_if_can_query_tasks():
+        return
     with session_scope(Session) as session:
         for task in (
             session.query(
@@ -180,6 +197,8 @@ def get_task_failure_counts() -> Generator[TaskFailInfo, None, None]:
 
 def get_xcom_params(task_id):
     """XCom parameters for matching task_id's for the latest run of a DAG."""
+    if not check_if_can_query_tasks():
+        return []
     with session_scope(Session) as session:
         max_execution_dt_query = (
             session.query(
@@ -232,6 +251,8 @@ def extract_xcom_parameter(value):
 
 def get_task_duration_info() -> Generator[TaskDurationInfo, None, None]:
     """Duration of successful tasks in seconds."""
+    if not check_if_can_query_tasks():
+        return
     with session_scope(Session) as session:
         max_execution_dt_query = (
             session.query(
@@ -255,14 +276,15 @@ def get_task_duration_info() -> Generator[TaskDurationInfo, None, None]:
                 TaskInstance.task_id,
                 TaskInstance.start_date,
                 TaskInstance.end_date,
-                TaskInstance.execution_date,
+                DagRun.execution_date
             )
+            .join(DagRun, DagRun.dag_id == TaskInstance.dag_id)
             .join(
                 max_execution_dt_query,
                 and_(
                     (TaskInstance.dag_id == max_execution_dt_query.c.dag_id),
                     (
-                        TaskInstance.execution_date
+                        DagRun.execution_date
                         == max_execution_dt_query.c.max_execution_dt
                     ),
                 ),

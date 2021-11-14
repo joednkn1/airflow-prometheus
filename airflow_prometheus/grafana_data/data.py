@@ -130,8 +130,6 @@ def get_dags(_, ts_range):
     edges = list(edges.values())
 
     nodes_df, edges_df = pd.DataFrame(nodes), pd.DataFrame(edges)
-    print(nodes_df)
-
     return [
         (dict(name='nodes', meta=dict(preferredVisualisationType='nodeGraph')), nodes_df),
         (dict(name='edges', meta=dict(preferredVisualisationType='nodeGraph')), edges_df),

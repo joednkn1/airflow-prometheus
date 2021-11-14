@@ -39,7 +39,6 @@ def get_task_scheduler_delay():
         return (
             session.query(
                 task_status_query.c.queue,
-                TaskInstance.execution_date,
                 TaskInstance.queued_dttm,
                 task_status_query.c.max_start.label("start_date"),
             )
