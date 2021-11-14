@@ -2,7 +2,7 @@
 from prometheus_client.core import GaugeMetricFamily
 from airflow_prometheus.stat import get_task_state_info, extract_xcom_parameter, get_xcom_params,\
     get_num_queued_tasks, get_task_duration_info, get_task_failure_counts, \
-    get_task_scheduler_delay, get_latest_tasks_state_info_for_all_dags
+    get_task_scheduler_delay, get_latest_tasks_state_info_for_all_dags, check_if_can_query_tasks
 from airflow_prometheus.xcom_config import load_xcom_config
 
 
@@ -78,7 +78,7 @@ class TasksMetricsCollector(object):
             "Duration of successful tasks in seconds",
             labels=["task_id", "dag_id", "execution_date"],
         )
-        for task in get_task_duration_info():
+        for task in []:
             task_duration_value = (
                 task.end_date - task.start_date
             ).total_seconds()
@@ -88,16 +88,17 @@ class TasksMetricsCollector(object):
             )
         yield successful_task_duration
 
-        task_failure_count = GaugeMetricFamily(
-            "airflow_task_fail_count",
-            "Count of failed tasks",
-            labels=["dag_id", "task_id"],
-        )
-        for task in get_task_failure_counts():
-            task_failure_count.add_metric(
-                [task.dag_id, task.task_id], task.count
+        if check_if_can_query_tasks():
+            task_failure_count = GaugeMetricFamily(
+                "airflow_task_fail_count",
+                "Count of failed tasks",
+                labels=["dag_id", "task_id"],
             )
-        yield task_failure_count
+            for task in get_task_failure_counts():
+                task_failure_count.add_metric(
+                    [task.dag_id, task.task_id], task.count
+                )
+            yield task_failure_count
 
         xcom_params = GaugeMetricFamily(
             "airflow_xcom_parameter",
@@ -117,20 +118,20 @@ class TasksMetricsCollector(object):
 
         yield xcom_params
 
-        task_scheduler_delay = GaugeMetricFamily(
-            "airflow_task_scheduler_delay",
-            "Airflow Task scheduling delay",
-            labels=["queue"],
-        )
-
-        for task in get_task_scheduler_delay():
-            task_scheduling_delay_value = (
-                    task.start_date - task.queued_dttm
-            ).total_seconds()
-            task_scheduler_delay.add_metric(
-                [task.queue], task_scheduling_delay_value
+        if check_if_can_query_tasks():
+            task_scheduler_delay = GaugeMetricFamily(
+                "airflow_task_scheduler_delay",
+                "Airflow Task scheduling delay",
+                labels=["queue"],
             )
-        yield task_scheduler_delay
+            for task in get_task_scheduler_delay():
+                task_scheduling_delay_value = (
+                        task.start_date - task.queued_dttm
+                ).total_seconds()
+                task_scheduler_delay.add_metric(
+                    [task.queue], task_scheduling_delay_value
+                )
+            yield task_scheduler_delay
 
         num_queued_tasks_metric = GaugeMetricFamily(
             "airflow_num_queued_tasks", "Airflow Number of Queued Tasks",

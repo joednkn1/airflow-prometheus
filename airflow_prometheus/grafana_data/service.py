@@ -13,7 +13,9 @@ limitations under the License.
 """
 from flask import Blueprint, request, jsonify, abort
 from airflow.models.dagbag import DagBag
+from flask_admin.base import expose_plugview
 import pandas as pd
+import datetime
 
 from airflow.www.app import csrf
 from airflow_prometheus.grafana_data.registry import data_generators as dg
@@ -26,14 +28,12 @@ methods = ['GET', 'POST']
 @csrf.exempt
 @pandas_component.route('/', methods=methods)
 def hello_world():
-    print(request.headers, request.get_json())
     return 'Jether\'s Grafana Pandas Datasource, used for rendering HTML panels and timeseries data.'
 
 
 @csrf.exempt
 @pandas_component.route('/search', methods=methods)
 def find_metrics():
-    print(request.headers, request.get_json())
     req = request.get_json()
 
     if req is None:
@@ -67,20 +67,35 @@ def find_metrics():
 @csrf.exempt
 @pandas_component.route('/query', methods=methods)
 def query_metrics():
-    print(request.headers, request.get_json())
     req = request.get_json()
 
     results = []
+    ad_hoc_filters = []
+    freq = None
+    targets = [dict(target="dags", type="table")]
+    data_range_from, data_range_to = None, None
+    if req is not None:
+        if 'adhocFilters' in req:
+            ad_hoc_filters = req['adhocFilters']
+        if 'targets' in req:
+            targets = req['targets']
+        if 'intervalMs' in req:
+            freq = str(req.get('intervalMs')) + 'ms'
+        if 'range' in req:
+            if 'from' in req['range']:
+                data_range_from = pd.Timestamp(req['range']['from']).to_pydatetime()
+            if 'to' in req['range']:
+                data_range_to = pd.Timestamp(req['range']['to']).to_pydatetime()
 
-    ts_range = {'$gt': pd.Timestamp(req['range']['from']).to_pydatetime(),
-                '$lte': pd.Timestamp(req['range']['to']).to_pydatetime()}
+    if data_range_from is None:
+        data_range_from = pd.Timestamp.min.to_pydatetime()
+    if data_range_to is None:
+        data_range_to = datetime.datetime.now().timestamp()
 
-    if 'intervalMs' in req:
-        freq = str(req.get('intervalMs')) + 'ms'
-    else:
-        freq = None
+    ts_range = {'$gt': data_range_from,
+                '$lte': data_range_to}
 
-    for target in req['targets']:
+    for target in targets:
         req_type = target.get('type', 'timeserie')
 
         target = target['target']
@@ -89,13 +104,12 @@ def query_metrics():
             [target, arg] = target.split(':')
         query_results = dg.metric_readers[target](arg, ts_range)
 
-        if "adhocFilters" in req:
-            for adhocFilter in req["adhocFilters"]:
-                assert adhocFilter["operator"] == "="
-                if isinstance(query_results, list):
-                    query_results = [(meta, df.loc[df[adhocFilter["key"]] == adhocFilter["value"]]) for (meta, df) in query_results]
-                else:
-                    query_results = query_results.loc[query_results[adhocFilter["key"]] == adhocFilter["value"]]
+        for ad_hoc_filter in ad_hoc_filters:
+            assert ad_hoc_filter["operator"] == "="
+            if isinstance(query_results, list):
+                query_results = [(meta, df.loc[df[ad_hoc_filter["key"]] == ad_hoc_filter["value"]]) for (meta, df) in query_results]
+            else:
+                query_results = query_results.loc[query_results[ad_hoc_filter["key"]] == ad_hoc_filter["value"]]
 
         if req_type == 'table':
             results.extend(dataframe_to_json_table(target, query_results))
@@ -108,7 +122,6 @@ def query_metrics():
 @csrf.exempt
 @pandas_component.route('/annotations', methods=methods)
 def query_annotations():
-    print(request.headers, request.get_json())
     req = request.get_json()
 
     results = []
@@ -130,7 +143,6 @@ def query_annotations():
 @csrf.exempt
 @pandas_component.route('/panels', methods=methods)
 def get_panel():
-    print(request.headers, request.get_json())
     req = request.args
 
     ts_range = {'$gt': pd.Timestamp(int(req['from']), unit='ms').to_pydatetime(),

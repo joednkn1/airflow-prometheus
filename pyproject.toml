@@ -14,11 +14,13 @@ publish = 'publish:publish'
 
 [tool.poetry.dependencies]
 python = "^3.8"
-apache-airflow = ">=2.0.0"
+apache-airflow = "^2.1.0"
 typer = "^0.3.2"
 Flask-Admin = "^1.5.8"
 prometheus-client = "^0.10.1"
 simplekv = "^0.14.1"
+pandas = "^1.3.4"
+wtforms = "^2.3.3"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"

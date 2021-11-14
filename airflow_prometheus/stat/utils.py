@@ -16,6 +16,7 @@ class ProcessingState(str, Enum):
     UPSTREAM_FAILED = "upstream_failed"
     SCHEDULED = "scheduled"
     FAILED = "failed"
+    REMOVED = "removed"
 
 
 def to_processing_state(raw_value: Optional[str]) -> ProcessingState:
