@@ -6,3 +6,4 @@ publish.log
 
 .idea/
 airflow/
+poetry.toml
