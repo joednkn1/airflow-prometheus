@@ -1,18 +1,13 @@
 # Airflow Prometheus (0.4.2)
 
 [![PyPI](https://img.shields.io/pypi/v/airflow-prometheus?style=flat-square)](https://pypi.org/project/airflow-prometheus/)
-[![GitHub commit activity](https://img.shields.io/github/commit-activity/m/covid-genomics/airflow-dvc?style=flat-square)](https://github.com/covid-genomics/airflow-prometheus/commits/master)
+[![GitHub commit activity](https://img.shields.io/github/commit-activity/m/styczynski/airflow-dvc?style=flat-square)](https://github.com/styczynski/airflow-prometheus/commits/master)
 
+This package was developed by [@styczynski](https://github.com/styczynski/).
+<br/>**I am founder of biotech startup [Deepflare](https://deepflare.ai) and this project was created when I was co-founding the company to provide contributions to the public domain.**
 
 This is an [Airflow](https://airflow.apache.org/) extension that adds support for generating [Prometheus metrics](https://prometheus.io/).
 Package is extension of awesome [airflow-promtheus-exporter project](https://github.com/robinhood/airflow-prometheus-exporter) by [Robinhood](https://github.com/robinhood).
-
-We extended the project, improved the code and added new features to enable better monitoring of your Airflow workloads. :rocket:
-
-<a href="https://covidgenomics.com/">
-<img src="https://github.com/covid-genomics/airflow-dvc/blob/master/static/cg_logo.png?raw=true" width="200px"/>
-</a>
-
 
 ## Installation
 
