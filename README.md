@@ -3,8 +3,6 @@
 [![PyPI](https://img.shields.io/pypi/v/airflow-prometheus?style=flat-square)](https://pypi.org/project/airflow-prometheus/)
 [![GitHub commit activity](https://img.shields.io/github/commit-activity/m/styczynski/airflow-dvc?style=flat-square)](https://github.com/styczynski/airflow-prometheus/commits/master)
 
-This package was developed by [@styczynski](https://github.com/styczynski/).
-
 This is an [Airflow](https://airflow.apache.org/) extension that adds support for generating [Prometheus metrics](https://prometheus.io/).
 Package is extension of awesome [airflow-promtheus-exporter project](https://github.com/robinhood/airflow-prometheus-exporter) by [Robinhood](https://github.com/robinhood).
 
